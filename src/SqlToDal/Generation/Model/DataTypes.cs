@@ -1,0 +1,36 @@
+﻿namespace SqlToDal.Generation.Model;
+
+public enum DataTypes
+{
+	@bigint,
+	@binary,
+	@bit,
+	@char,
+	@date,
+	@datetime,
+	@datetime2,
+	@datetimeoffset,
+	@decimal,
+	@float,
+	@image,
+	@int,
+	@money,
+	@nchar,
+	@ntext,
+	@numeric,
+	@nvarchar,
+	@real,
+	@rowversion,
+	@smalldatetime,
+	@smallint,
+	@smallmoney,
+	@sql_variant,
+	@text,
+	@time,
+	@timestamp,
+	@tinyint,
+	@uniqueidentifier,
+	@varbinary,
+	@varchar,
+	@xml
+}
