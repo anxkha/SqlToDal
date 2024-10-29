@@ -56,17 +56,35 @@
   <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
     <Folder Include="Properties" />
-    <Folder Include="Platform" />
-    <Folder Include="Platform\Types" />
-    <Folder Include="Platform\Tables" />
-    <Folder Include="Platform\Procedures" />
+    <Folder Include="dbo" />
+    <Folder Include="dbo\Tables" />
+    <Folder Include="dbo\Procedures" />
+    <Folder Include="dbo\Indexes" />
+    <Folder Include="dbo\Views" />
+    <Folder Include="Logging" />
+    <Folder Include="Logging\Tables" />
+    <Folder Include="Logging\Indexes" />
+    <Folder Include="Logging\Views" />
+    <Folder Include="Logging\Procedures" />
+    <Folder Include="Logging\Types" />
   </ItemGroup>
   <ItemGroup>
-    <Build Include="Platform\Platform.sql" />
-    <Build Include="Platform\Tables\tblLog.sql" />
-    <Build Include="Platform\Types\LogType.sql" />
-    <Build Include="Platform\Procedures\usp_InsertLogs.sql" />
-    <Build Include="Platform\Procedures\usp_SelectLogs.sql" />
-    <Build Include="Platform\Procedures\usp_InsertLog.sql" />
+    <Build Include="dbo\Tables\tblEmployee.sql" />
+    <Build Include="dbo\Tables\tblEmployeeDescription.sql" />
+    <Build Include="dbo\Indexes\UQ_tblEmployee_ObjectID_idx.sql" />
+    <Build Include="dbo\Indexes\NU_tblEmployeeDescription_EmployeeID_CreatedTimestamp_idx.sql" />
+    <Build Include="dbo\Tables\tblUser.sql" />
+    <Build Include="dbo\Indexes\UQ_tblUser_ObjectID_idx.sql" />
+    <Build Include="dbo\Views\viewEmployeeDescription.sql" />
+    <Build Include="Logging\Logging.sql" />
+    <Build Include="Logging\Tables\tblLog.sql" />
+    <Build Include="Logging\Tables\tblLogLevel.sql" />
+    <Build Include="Logging\Indexes\UQ_tblLogLevel_Name_idx.sql" />
+    <Build Include="Logging\Indexes\NU_tblLog_Timestamp_idx.sql" />
+    <Build Include="Logging\Views\viewLog.sql" />
+    <Build Include="Logging\Procedures\usp_InsertLog.sql" />
+    <Build Include="Logging\Procedures\usp_InsertLogs.sql" />
+    <Build Include="Logging\Procedures\usp_SelectLogs.sql" />
+    <Build Include="Logging\Types\LogType.sql" />
   </ItemGroup>
 </Project>
