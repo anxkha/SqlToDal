@@ -5,13 +5,13 @@ using Microsoft.SqlServer.TransactSql.ScriptDom;
 
 namespace SqlToDal.Generation.Model;
 
-public class ParsedTable
+public class ParsedView
 {
 	public string Schema { get; private set; }
 	public string Name { get; private set; }
 	public IEnumerable<ParsedColumn> Columns { get; private set; }
 
-	public ParsedTable(
+	public ParsedView(
 		TSqlObject tSqlObject,
 		IEnumerable<TSqlObject> primaryKeys,
 		IDictionary<TSqlObject, IEnumerable<ForeignKeyConstraintDefinition>> foreignKeys)
@@ -28,7 +28,7 @@ public class ParsedTable
 
 		// Get the columns
 		var columns = new List<ParsedColumn>();
-		var sqlColumns = tSqlObject.ObjectType.Name == "TableType" ? tSqlObject.GetReferenced(TableType.Columns) : tSqlObject.GetReferenced(Table.Columns);
+		var sqlColumns = tSqlObject.GetReferenced(View.Columns);
 		foreach (var sqlColumn in sqlColumns)
 		{
 			var column = new ParsedColumn(sqlColumn, tSqlObject, primaryKeys, foreignKeys);

@@ -9,7 +9,7 @@ namespace SqlToDal.Generation.Model;
 
 public class ParsedProcedure
 {
-	private static TSqlParser _parser = new TSql160Parser(true, SqlEngineType.All);
+	private static readonly TSqlParser _parser = new TSql160Parser(true, SqlEngineType.All);
 
 	public string Schema { get; private set; }
 	public string Name { get; private set; }
@@ -21,9 +21,9 @@ public class ParsedProcedure
 	public ParsedProcedure(
 		TSqlObject tSqlObject,
 		string prefix,
+		IEnumerable<ParsedView> views,
 		IEnumerable<TSqlObject> primaryKeys,
-		IDictionary<TSqlObject,
-			IEnumerable<ForeignKeyConstraintDefinition>> foreignKeys)
+		IDictionary<TSqlObject, IEnumerable<ForeignKeyConstraintDefinition>> foreignKeys)
 	{
 		if (tSqlObject.Name.Parts.Count == 2)
 			Schema = tSqlObject.Name.Parts[0];
@@ -32,7 +32,7 @@ public class ParsedProcedure
 		else
 			Schema = "dbo";
 
-        Prefix = prefix ?? "";
+		Prefix = prefix ?? "";
 		RawName = tSqlObject.Name.Parts.Last();
 		Name = RawName[Prefix.Length..];
 		Parameters = tSqlObject.GetReferenced(Procedure.Parameters).Select(x => new ParsedParameter(x, primaryKeys, foreignKeys));
@@ -48,16 +48,39 @@ public class ParsedProcedure
 		else
 			ast.AcceptChildren(selectVisitor);
 
-		var bodyColumnTypes = tSqlObject.GetReferenced(Procedure.BodyDependencies)
+		var bodyDependencies = tSqlObject.GetReferenced(Procedure.BodyDependencies);
+		var bodyColumnTypes = bodyDependencies
 			.Where(x => x.ObjectType.Name == "Column")
 			.GroupBy(bd => string.Join(".", bd.Name.Parts))
 			.Select(grp => grp.First())
 			.ToDictionary(
 				key => string.Join(".", key.Name.Parts),
-				val => new DataType
+				val =>
 				{
-					Map = DataTypeHelper.Instance.GetMap(TypeFormat.SqlServerDbType, val.GetReferenced(Column.DataType).First().Name.Parts.Last()),
-					Nullable = Column.Nullable.GetValue<bool>(val)
+					var schema = val.Name.Parts[0];
+					var tableViewName = val.Name.Parts[1];
+
+					IDictionary<TypeFormat, string> typeMap;
+					bool nullable;
+					ParsedView foundView = views.FirstOrDefault(_ => _.Name == tableViewName && _.Schema == schema);
+					if (foundView is not null)
+					{
+						var column = foundView.Columns.First(_ => _.Name == val.Name.Parts[2]);
+						typeMap = column.DataTypes;
+						nullable = column.IsNullable;
+					}
+					else
+					{
+						string dataTypeName = val.GetReferenced(Column.DataType).First().Name.Parts.Last();
+						typeMap = DataTypeHelper.Instance.GetMap(TypeFormat.SqlServerDbType, dataTypeName);
+						nullable = Column.Nullable.GetValue<bool>(val);
+					}
+
+					return new DataType
+					{
+						Map = typeMap,
+						Nullable = nullable
+					};
 				},
 				StringComparer.InvariantCultureIgnoreCase);
 

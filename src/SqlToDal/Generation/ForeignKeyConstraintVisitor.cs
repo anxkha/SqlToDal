@@ -12,6 +12,11 @@ internal class ForeignKeyConstraintVisitor : TSqlFragmentVisitor
 
 	public List<ForeignKeyConstraintDefinition> Nodes { get; private set; }
 
+	public override void Visit(TSqlFragment node)
+	{
+		base.Visit(node);
+	}
+
 	public override void Visit(ForeignKeyConstraintDefinition node)
 	{
 		base.Visit(node);

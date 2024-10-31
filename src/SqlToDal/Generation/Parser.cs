@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.SqlServer.Dac;
 using Microsoft.SqlServer.Dac.Model;
@@ -9,6 +10,8 @@ namespace SqlToDal.Generation;
 
 public class Parser
 {
+	private static readonly TSqlParser _parser = new TSql160Parser(true, SqlEngineType.All);
+
 	public string ProcedurePrefix { get; set; } = "";
 
 	public ParsedProcedure[] Parse(string dacpacPath)
@@ -25,9 +28,11 @@ public class Parser
 		var primaryKeys = model
 			.GetObjects(DacQueryScopes.UserDefined, PrimaryKeyConstraint.TypeClass)
 			.Select(o => o.GetReferenced().Where(r => r.ObjectType.Name == "Column")).SelectMany(c => c);
+
+		var parsedViews = sqlViews.Select(_ => new ParsedView(_, primaryKeys, foreignKeys));
 		var procedures = model
 			.GetObjects(DacQueryScopes.UserDefined, Procedure.TypeClass)
-			.Select(sqlProc => new ParsedProcedure(sqlProc, ProcedurePrefix, primaryKeys, foreignKeys))
+			.Select(sqlProc => new ParsedProcedure(sqlProc, ProcedurePrefix, parsedViews, primaryKeys, foreignKeys))
 			.ToList();
 
 		return [.. procedures];
@@ -37,9 +42,17 @@ public class Parser
 	{
 		return objects.Select(obj =>
 		{
-			TSqlModelUtils.TryGetFragmentForAnalysis(obj, out TSqlFragment fragment);
+			_ = obj.TryGetAst(out var ast);
 			var foreignKeyConstraintVisitor = new ForeignKeyConstraintVisitor();
-			fragment.Accept(foreignKeyConstraintVisitor);
+			if (ast.Batches[0].Statements[0] is TSqlStatementSnippet statementSnippet)
+			{
+				using var reader = new StringReader(statementSnippet.Script);
+				var fragment = _parser.Parse(reader, out var errors);
+				fragment.Accept(foreignKeyConstraintVisitor);
+			}
+			else
+				ast.AcceptChildren(foreignKeyConstraintVisitor);
+
 			return new { obj, foreignKeyConstraintVisitor.Nodes };
 		}).ToDictionary(key => key.obj, val => val.Nodes.AsEnumerable());
 	}
